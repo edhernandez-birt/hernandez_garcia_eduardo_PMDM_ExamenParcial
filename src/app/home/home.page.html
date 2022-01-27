@@ -7,14 +7,18 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
- <!--<ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>--> 
+  <form #formulario="ngForm">
+    <ion-list *ngFor="let item of cuestionario">
+      <ion-item>
+        <ion-label>{{item.pregunta}}</ion-label>
+        <!--Si los fallos son negativos muestra numero errores-->
+        <ion-badge *ngIf="item.errores<0" color="danger" mode="ios">{{item.errores}}</ion-badge>
+        <!--Si el valor de errores es 1 mostrar la respuesta en verde-->
+        <ion-badge *ngIf="item.errores>=1" color="success" mode="ios">{{item.respuesta}}</ion-badge>
+        <ion-button (click)="presentaPregunta(item)" expand="block" fill="clear" shape="round">
+          RESPONDER
+        </ion-button>
+      </ion-item>
+    </ion-list>
+  </form>
 </ion-content>
