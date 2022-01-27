@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ICuestionario } from './../interfaces/mis-interfaces';
 import { Observable } from 'rxjs/internal/Observable';
 import { AlertController } from '@ionic/angular';
+import { GestionStorageService } from '../servicios/gestion-storage.service';
 
 
 
@@ -16,24 +17,37 @@ export class HomePage {
 
   cuestionario: ICuestionario[]=[];
 
-  constructor(private leerFichero: HttpClient, public alertaPregunta: AlertController) {
-    this.getPreguntasFichero();
+  constructor(private leerFichero: HttpClient, public alertaPregunta: AlertController, private gestionStorage: GestionStorageService) {
+
+    let datosPromesa: Promise<ICuestionario[]> = gestionStorage.getObject("storagePreguntas");
+
+    //Si hay datos de storage los cargamos en el array del cuestionario sino lo pedimos al JSON
+    datosPromesa.then( (data) => {
+      if(data) {
+          console.log(data);
+          this.cuestionario.push(...data);
+      } else {
+        this.getPreguntasFichero();
+      }
+    });
+
+
+
+  
   }
 
+  //Cuando no están guardadas en storage
   getPreguntasFichero() {
-    // Declaramos el Observable. Requerirá importar la clase
     let respuesta: Observable<ICuestionario[]>
-    
-
     respuesta = this.leerFichero.get<ICuestionario[]>("/assets/datos/datos.json");
-    
     respuesta.subscribe( resp => {
       this.cuestionario.push(... resp);
       console.log(this.cuestionario);
       this.cuestionario.forEach(pregunta => {
         pregunta.errores=0;
+       
       });
-      //console.log("Noticias", resp);
+      this.gestionStorage.setObject("storagePreguntas",this.cuestionario);
     } );
   }
 
@@ -43,7 +57,7 @@ export class HomePage {
   }
   
   async presentaPregunta(item) {
-    let resultado=0; //de momento. luego al storage
+    let resultado=item.errores;
 
     const alert = await this.alertaPregunta.create({
       cssClass: 'my-custom-class',
@@ -65,11 +79,16 @@ export class HomePage {
             resultado=this.comprobarPregunta(data.respuestaUsuario,item.pregunta);
             if(resultado==1){
               item.errores=1;
+              const resultado = this.cuestionario.findIndex( pregunta => pregunta.pregunta == item.pregunta );
+              console.log(resultado);
+              
             }else{
               item.errores-=1;
+              const resultado = this.cuestionario.findIndex( pregunta => pregunta.pregunta == item.pregunta );
+              console.log(resultado);
             }
             console.log(item.errores);
-            //Comprobar pregunta
+           //NO hay que guardar siempre this.gestionStorage.setObject("storagePreguntas", this.cuestionario);
           }
         }
       ]
@@ -91,17 +110,9 @@ export class HomePage {
     return encontrado; 
   }
 
-// // imports de HttpClientModule en app.module.ts
-// import {HttpClientModule} from '@angular/common/http'
-// // Leer datos
-// let respuesta: Observable<TipoDato>
-// respuesta = this.leerFichero.get<TipoDato>("/assets/datos/nombre.json");
-// respuesta.subscribe( datos => {
-// …
-// } );
-// // Conversión JSON objetos
-// let copiaDatos: TipoDatos = JSON.parse(stringDatos);
-// const stringDatos2: string = JSON.stringify(copiaDatos);
 
+  guardarCuestionario(){
+    this.gestionStorage.setObject("storagePreguntas", this.cuestionario);
+  }
 
 }
